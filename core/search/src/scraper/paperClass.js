@@ -1,5 +1,8 @@
 class PaperResult {
-  constructor()
+
+  constructor(name, authors) {
+
+  }
 
 }
 

@@ -1,8 +1,8 @@
-const { query, getPapers } = require("./sources/acm.js");
+const { acm } = require("./sources");
 
 const getPapersBySearchQuery = async (searchQuery) => {
   console.log(`getPapersBySearchQuery`);
-  const acmPapers = await getPapers(searchQuery);
+  const acmPapers = await acm(searchQuery);
 }
 
 const getPapersByKeyWords = (keywords = []) => {
