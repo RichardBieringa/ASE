@@ -17,9 +17,6 @@ const main = async () => {
   const query = process.argv.slice(2).join(' ');
   const papers = await getPapersBySearchQuery(query);
 
-  // temp: output to 
-  fs.writeFileSync("papers.json", JSON.stringify(papers));
-
   return 0;
 }
 

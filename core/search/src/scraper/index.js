@@ -1,4 +1,4 @@
-const { acm } = require("./sources");
+const { queryACM, queryArxiv } = require("./sources");
 
 const getPapersBySearchQuery = async (searchQuery) => {
   console.log(`getPapersBySearchQuery`);
@@ -12,8 +12,8 @@ const getPapersBySearchQuery = async (searchQuery) => {
   };
 
   // Scrape all electronic DBs
-  articles.acm = await acm(searchQuery);
-  // articles.arxiv = await arxiv(searchQuery);
+  // articles.acm = await queryACM(searchQuery);
+  articles.arxiv = await queryArxiv(searchQuery, 0);
   // articles.ieee = await ieee(seachQuery);
   // articles.scienceDirect = await scienceDirect(searchQuery);
   // articles.springer = await spinger(searchQuery);

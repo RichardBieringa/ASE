@@ -1,5 +1,7 @@
-const acm = require("./acm.js");
+const queryAcm = require("./acm.js");
+const queryArxiv = require("./arxiv");
 
 module.exports = {
-  acm
+  queryAcm,
+  queryArxiv
 }

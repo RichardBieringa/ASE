@@ -1,6 +1,6 @@
 const cheerio = require("cheerio");
 
-const axios = require("../axiosWrapper.js");
+const axios = require("../axiosWrapper.js")(true);
 const Article = require("../../models/article");
 
 const config = require("./config.js")["acm"];

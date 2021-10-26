@@ -5,7 +5,7 @@ module.exports = {
   },
   arxiv: {
     pageSize: 25,
-    timeout: 500,
+    timeout: 200,
   },
   ieee: {
     pageSize: 25,

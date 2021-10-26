@@ -3,10 +3,10 @@ const cheerio = require("cheerio");
 const axios = require("../axiosWrapper.js")(false);
 const Article = require("../../models/article");
 
-const config = require("./config.js")["arxiv"];
+const config = require("./config.js")["ieee"];
 
 // SOURCE INFO
-const SOURCE = "arxiv";
+const SOURCE = "IEEE";
 const HOST = "https://arxiv.org";
 
 // SOURCE SETTINGS
