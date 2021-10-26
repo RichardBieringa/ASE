@@ -15,4 +15,12 @@ module.exports = {
     pageSize: 25,
     timeout: 500,
   },
+  springerLink: {
+    pageSize: 25,
+    timeout: 500,
+  },
+  wiley: {
+    pageSize: 25,
+    timeout: 500,
+  },
 }
