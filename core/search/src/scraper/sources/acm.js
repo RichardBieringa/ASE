@@ -1,12 +1,16 @@
 const cheerio = require("cheerio");
+
 const axios = require("../axiosWrapper.js");
 const Article = require("../../models/article");
+const config = require("./config.js").acm;
 
-// SOURCE SPECIFIC SETTINGS/DEFAULTS
+// SOURCE INFO
 const SOURCE = "ACM";
-const PAGE_SIZE = 25;
-const TIMEOUT = 1000;
 const HOSTNAME = "https://dl.acm.org";
+
+// SOURCE SETTINGS
+const PAGE_SIZE = config.pageSize;
+const TIMEOUT = config.timeout;
 
 
 /**
