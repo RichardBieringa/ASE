@@ -25,4 +25,4 @@ connection.on("connected", () => console.log(`Mongo: connection established.`));
 connection.on("error", () => console.error(`Mongo: connection error!`));
 connection.on("disconnected", () => console.log(`Mongo: disconnected.`));
 
-module.exports =  mongoose.connect(connectionString);
+module.exports = mongoose.connect(connectionString);

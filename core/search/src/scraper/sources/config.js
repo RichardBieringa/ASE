@@ -11,4 +11,8 @@ module.exports = {
     pageSize: 25,
     timeout: 500,
   },
+  scienceDirect: {
+    pageSize: 25,
+    timeout: 500,
+  },
 }

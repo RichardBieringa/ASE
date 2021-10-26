@@ -10,12 +10,15 @@ const main = async () => {
   }
 
   // Set up mongodb connection
-  await require("./db.js");
+  const mongoose = await require("./db.js");
 
   // Gets the program's arguments and joins them seperated by spaces
   // node app.js test query -> "test query"
   const query = process.argv.slice(2).join(' ');
   const papers = await getPapersBySearchQuery(query);
+
+  // Close DB connection
+  mongoose.connection.close();
 
   return 0;
 }

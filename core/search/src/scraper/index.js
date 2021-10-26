@@ -1,4 +1,4 @@
-const { queryACM, queryArxiv } = require("./sources");
+const { queryACM, queryArxiv, queryIEEE, queryScienceDirect } = require("./sources");
 
 const getPapersBySearchQuery = async (searchQuery) => {
   console.log(`getPapersBySearchQuery`);
@@ -13,12 +13,11 @@ const getPapersBySearchQuery = async (searchQuery) => {
 
   // Scrape all electronic DBs
   // articles.acm = await queryACM(searchQuery);
-  articles.arxiv = await queryArxiv(searchQuery, 0);
-  // articles.ieee = await ieee(seachQuery);
-  // articles.scienceDirect = await scienceDirect(searchQuery);
+  // articles.arxiv = await queryArxiv(searchQuery, 0);
+  // articles.ieee = await queryIEEE(searchQuery);
+  articles.scienceDirect = await queryScienceDirect(searchQuery);
   // articles.springer = await spinger(searchQuery);
   // articles.wiley = await wiley(searchQuery);
-
 
   console.log(`Articles:`);
   console.log(`ACM: ${articles.acm.length}`);
@@ -29,11 +28,11 @@ const getPapersBySearchQuery = async (searchQuery) => {
   console.log(`Wiley Online Library: ${articles.wiley.length}`);
 
   return articles;
-}
+};
 
 const getPapersByKeyWords = (keywords = []) => {
-  console.log(`QUERY - [${keywords.join(",")}]`)
-}
+  console.log(`QUERY - [${keywords.join(",")}]`);
+};
 
 module.exports = {
   getPapersBySearchQuery,

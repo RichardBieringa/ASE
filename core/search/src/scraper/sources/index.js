@@ -1,7 +1,11 @@
-const queryAcm = require("./acm.js");
+const queryACM = require("./acm.js");
 const queryArxiv = require("./arxiv");
+const queryIEEE = require("./ieee.js");
+const queryScienceDirect = require("./scienceDirect.js");
 
 module.exports = {
-  queryAcm,
-  queryArxiv
+  queryACM,
+  queryArxiv,
+  queryIEEE,
+  queryScienceDirect,
 }

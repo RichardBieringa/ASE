@@ -16,6 +16,7 @@
     "cheerio": "^1.0.0-rc.10",
     "dotenv": "^10.0.0",
     "mongoose": "^6.0.12",
+    "puppeteer": "^10.4.0",
     "tough-cookie": "^4.0.0"
   }
 }
