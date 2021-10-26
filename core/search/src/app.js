@@ -2,8 +2,25 @@ const { getPapersBySearchQuery } = require("./scraper");
 
 
 const main = async () => {
-  console.log(`MAIN`)
-  const papers = await getPapersBySearchQuery("Kubernetes");
+  // Usage check
+  if (process.argv.length < 3) {
+    console.error("Usage: node app.js <SEARCH QUERY>");
+    console.error("exiting...")
+    process.exit(1);
+  }
+
+  // Set up mongodb connection
+  await require("./db.js");
+
+  // Gets the program's arguments and joins them seperated by spaces
+  // node app.js test query -> "test query"
+  const query = process.argv.slice(2).join(' ');
+  const papers = await getPapersBySearchQuery(query);
+
+  // temp: output to 
+  fs.writeFileSync("papers.json", JSON.stringify(papers));
+
+  return 0;
 }
 
 main();

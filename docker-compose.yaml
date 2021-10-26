@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  mongo:
+    restart: always
+    image: "${MONGO_VERSION:-mongo:5.0-focal}"
+    ports:
+      - 27017:27017
+    network_mode: bridge
+    # environment:
+    #   MONGO_INITDB_RkVOOT_USERNAME: "${MONGO_USERNAME:-root}"
+    #   MONGO_INITDB_ROOT_PASSWORD: "${MONGO_USERNAME:-password}"
+
+# volumnes:
+#   db 

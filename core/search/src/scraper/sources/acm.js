@@ -1,7 +1,13 @@
 const cheerio = require("cheerio");
 const axios = require("../axiosWrapper.js");
 
-const PAGE_SIZE = 5;
+const Article = require("../../models/article");
+
+const SOURCE = "ACM";
+
+const PAGE_SIZE = 25;
+const TIMEOUT = 1000;
+
 const HOSTNAME = "https://dl.acm.org";
 
 const query = async (searchQuery, pageSize = PAGE_SIZE) => {
@@ -14,16 +20,14 @@ const query = async (searchQuery, pageSize = PAGE_SIZE) => {
     searchResults = await getSearchResults(searchQuery, page, pageSize);
     const { articleUrls } = searchResults;
 
+    for (let url of articleUrls) {
+      const article = await getArticle(url);
+      articles.push(article)
 
-    console.log("searchResults")
-    console.log(searchResults)
+      // pls no ban
+      await new Promise(resolve => setTimeout(resolve, TIMEOUT));
+    }
 
-    // Creates an array of promises to request the article page HTMl
-    const promises = articleUrls.map(url => getArticle(url));
-    const articles = await Promise.all(promises);
-    console.log(articles)
-
-    articles.push(...articles);
     page++;
   } while (searchResults && searchResults.hasNext)
   console.log(`Queried ${page} pages, got ${articles.length} articles`);
@@ -45,6 +49,8 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
     const result = parseResultPage(response.data);
     return result;
   } catch(err) {
+    console.error(err.message);
+    process.exit(1);
     throw err;
   }
 }
@@ -78,52 +84,51 @@ const getArticle = async (url) => {
   console.log(`GET - ${url}`);
   try {
     const response = await axios.get(url);
-    const result = parseArticlePage(response.data);
+    const result = parseArticlePage(response.data, url);
     return result;
   } catch(err) {
+    console.error(err.message);
+    process.exit(1);
     throw err;
   }
 }
 
 
 const parseArticlePage = async (pageHTML, url) => {
-  const result = {
-    url,
-    title: null,
-    type: null,
-    venue: null,
-    authors: [],
-    abstract: null,
-    publicationDate: null,
-    citationCount: null,
-  }
-
   // Parse the Page HTML
   const $ = cheerio.load(pageHTML);
 
-  result.title = $(".citation .issue-heading").text();
-  result.type = $(".citation .citation__title").text();
-  result.venue = $(".epub-section__title").text();
-  $(".citation .loa__author-info .loa__author-name").each((i, el) => result.authors.push($(el).text()));
-  result.citationCount = parseInt($(".issue-item__footer .citation .icon-quote + span").text());
-  result.abstract = $(".article__body .article__abstract .abstractInFull p").text();
-  result.publicationDate = new Date($(".citation .CitationCoverDate").text());
+  const doi = url.split("/doi/").pop();
+  const title = $(".citation .issue-heading").text();
+  const type = $(".citation .citation__title").text();
+  const venue = $(".citation .epub-section__title").text();
+  const authors = [];
+  $(".citation .loa__author-info .loa__author-name").each((i, el) => authors.push($(el).text()));
+  const abstract = $(".article__body .article__abstract .abstractInFull p").text();
+  const publicationDate = new Date($(".citation .CitationCoverDate").text());
 
+  const article = new Article({
+    source: SOURCE,
+    doi,
+    url,
+    title,
+    type,
+    venue,
+    authors,
+    abstract,
+    publicationDate,
+  });
 
-  // Check if all values are populated
-  let hasError = false;
-  for (let [key, value] of Object.entries(result)) {
-    if (value === null || Array.isArray(value) && value.length === 0) {
-      console.error(`Article[${key}] not set or empty!`);
-      hasError = true;
+  try {
+    // Save it to DB
+    await article.save();
+  } catch(err) {
+    if (err.code === 11000) {
+      console.error("Duplicate entry, skipping...")
     }
   }
 
-
-  // Exit on error
-  if (hasError) throw new Error("HTML Parsing Error");
-
-  return result;
+  return article;
 }
 
 module.exports = query;
