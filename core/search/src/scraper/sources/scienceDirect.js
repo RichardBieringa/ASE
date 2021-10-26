@@ -89,7 +89,7 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
       console.log(entries)
       for (let entry of entries) {
         const path = entry.getAttribute("href");
-        const url = `${location.protocol}//${location.hostname}/${path}`
+        const url = `${location.protocol}//${location.hostname}${path}`
         console.log(url);
         result.articleUrls.push(url)
       }
@@ -120,9 +120,6 @@ const parseArticlePage = async (page, url) => {
   });
 
   const result = await page.evaluate(() => {
-    // Extracts the submission date
-    const dateRe = /.*(\d{0,2}\s\w+\s\d{4}).*/;
-
     const articleData = {
       doi: null,
       url: null,
@@ -141,7 +138,7 @@ const parseArticlePage = async (page, url) => {
     const title = document.querySelector(".title-text");
     if (title) articleData.title = title.innerText.trim();
 
-    const venue = document.querySelector(".article-dochead > span");
+    const venue = document.querySelector(".article-dochead > span, .publication-title-link");
     if (venue) articleData.venue = venue.innerText.trim();
 
     const authors = document.querySelectorAll(".author-group .author .content");
@@ -154,13 +151,19 @@ const parseArticlePage = async (page, url) => {
     const abstract = document.querySelector(".abstract.author p");
     if (abstract) articleData.abstract = abstract.innerText.trim();
 
-    const dateString = document.querySelector("#banner .wrapper p");
-    if (dateString) articleData.publicationDate = new Date(dateString.innerText.trim().match(dateRe).pop());
+    // Extracts the submission date
+    const dateRe = /.*(\d{0,2}\s\w+\s\d{4}).*/;
+    const dateEl = document.querySelector("#banner .wrapper p, .Publication .publication-volume .text-xs");
+    if (dateEl && dateRe.test(dateEl.textContent)) {
+      const text = dateEl.innerText.trim();
+      const matches = text.match(dateRe);
+      const dateString = matches.pop().trim();
+      articleData.publicationDate = dateString;
+    }
 
     return articleData;
   });
 
-  console.log(result);
   const { doi, title, type, venue, authors, abstract, publicationDate } = result;
 
   const article = new Article({
@@ -172,7 +175,7 @@ const parseArticlePage = async (page, url) => {
     venue,
     authors,
     abstract,
-    publicationDate,
+    publicationDate: new Date(publicationDate),
   });
 
 
