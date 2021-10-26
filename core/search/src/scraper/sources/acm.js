@@ -1,41 +1,59 @@
 const cheerio = require("cheerio");
 const axios = require("../axiosWrapper.js");
-
 const Article = require("../../models/article");
 
+// SOURCE SPECIFIC SETTINGS/DEFAULTS
 const SOURCE = "ACM";
-
 const PAGE_SIZE = 25;
 const TIMEOUT = 1000;
-
 const HOSTNAME = "https://dl.acm.org";
 
-const query = async (searchQuery, pageSize = PAGE_SIZE) => {
+
+/**
+ * Queries the digital libary
+ * @param {String} searchQuery The query to search the library for
+ * @param {Number} startPage Which page to start on
+ * @param {Number} pageSize Amount of results to retrieve per page
+ * @returns [Articles]
+ */
+const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
   const articles = [];
 
-  let page = 0;
+  let page = startPage;
   let searchResults = null;
 
+  // Crawl the search result pages until finished
   do {
+    // Gets all articles from a single search result page
+    // also checks if there is another result page after it
     searchResults = await getSearchResults(searchQuery, page, pageSize);
     const { articleUrls } = searchResults;
 
+    // Request a single result page and parse the article metadata
+    // Not parallel to prevent IP blocks
     for (let url of articleUrls) {
       const article = await getArticle(url);
       articles.push(article)
 
-      // pls no ban
+      // synchronous sleep
       await new Promise(resolve => setTimeout(resolve, TIMEOUT));
     }
 
     page++;
   } while (searchResults && searchResults.hasNext)
+
   console.log(`Queried ${page} pages, got ${articles.length} articles`);
 
   return articles;
 }
 
-// Gets a single page of search results, returns the SERP results
+/**
+ * Make a GET request for a single search result page
+ * @param {String} searchQuery The query to search the library for
+ * @param {Number} startPage Which page to start on
+ * @param {Number} pageSize Amount of results to retrieve per page
+ * @returns Object { articleUrls: [String], hasNext: Boolean}
+ */
 const getSearchResults = async (searchQuery, page, pageSize) => {
   // The API endpoint for querying papers
   const endpoint = `${HOSTNAME}/action/doSearch`;
@@ -50,12 +68,17 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
     return result;
   } catch(err) {
     console.error(err.message);
+    console.error("Exiting...");
     process.exit(1);
-    throw err;
   }
 }
 
-// Extracts the data from a query page
+/**
+ * Parses a single search result page and retrieves the entries
+ * also checks if there is another page of results after this
+ * @param {String} pageHTML The HTML content of the search page
+ * @returns Object { articleUrls: [String], hasNext: Boolean}
+ */
 const parseResultPage = (pageHTML) => {
   const result = {
     articleUrls: [],
@@ -80,6 +103,11 @@ const parseResultPage = (pageHTML) => {
   return result;
 }
 
+/**
+ * Requests a single article page and parses it
+ * @param {String} url URL obtained by the search result page
+ * @returns Article
+ */
 const getArticle = async (url) => {
   console.log(`GET - ${url}`);
   try {
@@ -88,16 +116,22 @@ const getArticle = async (url) => {
     return result;
   } catch(err) {
     console.error(err.message);
+    console.error("exiting...")
     process.exit(1);
-    throw err;
   }
 }
 
 
+/**
+ * Parses a single article page and retrieves the metadata
+ * @param {String} pageHTML The HTML content of the search page
+ * @returns Article
+ */
 const parseArticlePage = async (pageHTML, url) => {
   // Parse the Page HTML
   const $ = cheerio.load(pageHTML);
 
+  // Web scraping the DOM contents
   const doi = url.split("/doi/").pop();
   const title = $(".citation .issue-heading").text();
   const type = $(".citation .citation__title").text();
@@ -123,8 +157,11 @@ const parseArticlePage = async (pageHTML, url) => {
     // Save it to DB
     await article.save();
   } catch(err) {
+    // Skip if duplicate
     if (err.code === 11000) {
       console.error("Duplicate entry, skipping...")
+    } else {
+      throw err;
     }
   }
 
