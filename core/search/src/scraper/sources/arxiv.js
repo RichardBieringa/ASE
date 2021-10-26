@@ -3,11 +3,11 @@ const cheerio = require("cheerio");
 const axios = require("../axiosWrapper.js");
 const Article = require("../../models/article");
 
-const config = require("./config.js")["acm"];
+const config = require("./config.js")["ieeee"];
 
 // SOURCE INFO
 const SOURCE = "ACM";
-const HOST = "https://dl.acm.org";
+const HOST = "https://arxiv.org/";
 
 // SOURCE SETTINGS
 const PAGE_SIZE = config.pageSize;
