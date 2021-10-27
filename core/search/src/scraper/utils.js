@@ -3,6 +3,7 @@ const winston = require("winston");
 const logger = winston.createLogger({
   transports: [new winston.transports.Console()],
   format: winston.format.combine(
+    winston.format.colorize(),
     winston.format.label({
       label: `ASE 🕷`,
     }),
@@ -12,7 +13,8 @@ const logger = winston.createLogger({
     winston.format.printf(
       (info) =>
         `${info.level}: ${info.label}: ${[info.timestamp]}: ${info.message}`
-    )
+    ),
+    // winston.format.json(),
   ),
 });
 

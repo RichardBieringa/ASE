@@ -151,31 +151,34 @@ const parseArticlePage = async (pageHTML, url) => {
   const dateString = $(".article-dates__first-online > time").attr("datetime");
   const publicationDate = new Date(dateString);
 
-  const article = new Article({
-    source: SOURCE,
-    doi,
-    url,
-    title,
-    type,
-    venue,
-    authors,
-    abstract,
-    publicationDate: createDate(publicationDate),
-  });
-
   try {
+    // Create Article entry
+    const article = new Article({
+      source: SOURCE,
+      doi,
+      url,
+      title,
+      type,
+      venue,
+      authors,
+      abstract,
+      publicationDate: createDate(publicationDate),
+    });
+
     // Save it to DB
     await article.save();
+    return article;
+
   } catch(err) {
     // Skip if duplicate
     if (err.code === 11000) {
       logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
     } else {
-      throw err;
+      logger.error(`${SOURCE}: Article parsing error: ${err.message}`);
     }
-  }
 
-  return article;
+    return null;
+  }
 }
 
 module.exports = query;

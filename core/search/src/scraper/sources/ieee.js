@@ -1,5 +1,3 @@
-const cheerio = require("cheerio");
-
 const { logger, dateRe, createDate } = require("../utils.js");
 const axios = require("../axiosWrapper.js")(true);
 const Article = require("../../models/article");
@@ -98,32 +96,41 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
 const parseArticle = async (articleRecord) => {
   const { authors, doi, documentLink, publicationTitle, publicationDate, abstract, displayContentType, citationCount } = articleRecord 
 
-  const article = new Article({
-    source: SOURCE,
-    doi,
-    url: `${HOST}${documentLink}`,
-    title: publicationTitle,
-    type: displayContentType,
-    venue: null,
-    authors: authors.map(a => a.normalizedName),
-    abstract,
-    publicationDate: createDate(publicationDate),
-    citationCount,
-  });
+  const title = publicationTitle;
+  const url = `${SOURCE}/${documentLink}`;
+  const type = displayContentType;
+  const venue = null;
+  const formattedAuthors = authors.map(a => a.normalizedName);
+
 
   try {
+    // Create Article entry
+    const article = new Article({
+      source: SOURCE,
+      doi,
+      url,
+      title,
+      type,
+      venue,
+      authors: formattedAuthors,
+      abstract,
+      publicationDate: createDate(publicationDate),
+    });
+
     // Save it to DB
     await article.save();
+    return article;
+
   } catch(err) {
     // Skip if duplicate
     if (err.code === 11000) {
       logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
     } else {
-      throw err;
+      logger.error(`${SOURCE}: Article parsing error: ${err.message}`);
     }
-  }
 
-  return article;
+    return null;
+  }
 }
 
 module.exports = query;

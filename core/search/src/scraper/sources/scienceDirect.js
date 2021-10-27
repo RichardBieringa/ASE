@@ -27,7 +27,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
   let searchResults = null;
 
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ["--disable-setuid-sandbox"],
     ignoreHTTPSErrors: true,
   });
@@ -163,32 +163,34 @@ const parseArticlePage = async (page, url) => {
 
   const { doi, title, type, venue, authors, abstract, publicationDate } = result;
 
-  const article = new Article({
-    source: SOURCE,
-    doi,
-    url,
-    title,
-    type,
-    venue,
-    authors,
-    abstract,
-    publicationDate: createDate(publicationDate),
-  });
-
-
   try {
+    // Create Article entry
+    const article = new Article({
+      source: SOURCE,
+      doi,
+      url,
+      title,
+      type,
+      venue,
+      authors,
+      abstract,
+      publicationDate: createDate(publicationDate),
+    });
+
     // Save it to DB
     await article.save();
+    return article;
+
   } catch(err) {
     // Skip if duplicate
     if (err.code === 11000) {
       logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
     } else {
-      throw err;
+      logger.error(`${SOURCE}: Article parsing error: ${err.message}`);
     }
-  }
 
-  return article;
+    return null;
+  }
 };
 
 module.exports = query;
