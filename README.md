@@ -10,13 +10,11 @@ Below are the online libraries that are used to search
 
 | Name | URL |
 | ------ | ------ |
-| ACM Digital Library | [link][https://dl.acm.org/] |
-| arXiv.org | [link][https://arxiv.org/] |
-| IEEE Xplore | [link][https://ieeexplore.ieee.org/Xplore/home.jsp] |
-| Science Direct | [link][https://www.sciencedirect.com/] |
-| Springer Link | [link][https://link.springer.com/] |
-| Wiley Online Library | [link][https://onlinelibrary.wiley.com/] |
-
+| ACM Digital Library | [link](https://dl.acm.org/) |
+| arXiv.org | [link](https://arxiv.org/) |
+| IEEE Xplore | [link](https://ieeexplore.ieee.org/Xplore/home.jsp) |
+| Science Direct | [link](https://www.sciencedirect.com/) |
+| Springer Link | [link](https://link.springer.com/) |
 
 # Usage
 
