@@ -17,6 +17,7 @@
     "dotenv": "^10.0.0",
     "mongoose": "^6.0.12",
     "puppeteer": "^10.4.0",
-    "tough-cookie": "^4.0.0"
+    "tough-cookie": "^4.0.0",
+    "winston": "^3.3.3"
   }
 }

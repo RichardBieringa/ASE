@@ -1,5 +1,6 @@
 const puppeteer = require("puppeteer");
 
+const { logger, dateRe, createDate } = require("../utils.js");
 const Article = require("../../models/article");
 
 const config = require("./config.js")["scienceDirect"];
@@ -52,7 +53,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
     pageIndex++;
   } while (searchResults && searchResults.hasNext);
 
-  console.log(`Queried ${page} pages, got ${articles.length} articles`);
+  logger.info(`${SOURCE}: Queried ${page} pages, got ${articles.length} articles`);
 
   browser.close();
   return articles;
@@ -70,7 +71,7 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
   const offset = pageIndex * pageSize;
 
   const url = `${HOST}/search?qs=${searchQuery}&offset=${offset}&sortBy=date`
-  console.log(`PUPETTEER - ${url}`);
+  logger.debug(`PUPETTEER - ${url}`);
 
   try {
     // window.load
@@ -85,12 +86,9 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
       };
 
       const entries = document.querySelectorAll(".result-item-content .result-list-title-link ");
-      console.log(`ENTRIES:`)
-      console.log(entries)
       for (let entry of entries) {
         const path = entry.getAttribute("href");
         const url = `${location.protocol}//${location.hostname}${path}`
-        console.log(url);
         result.articleUrls.push(url)
       }
 
@@ -100,9 +98,8 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
 
     return result;
   } catch (err) {
-    console.error(err.message);
-    console.error("Exiting...");
-    process.exit(1);
+    logger.error(`${SOURCE}: query error: ${error.message}`)
+    return null;
   }
 };
 
@@ -112,7 +109,7 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
  * @returns Article
  */
 const parseArticlePage = async (page, url) => {
-  console.log(`PUPPETEER - ${url}`);
+  logger.debug(`PUPPETEER - ${url}`);
 
   // Window.load 
   await page.goto(url, {
@@ -175,7 +172,7 @@ const parseArticlePage = async (page, url) => {
     venue,
     authors,
     abstract,
-    publicationDate: new Date(publicationDate),
+    publicationDate: createDate(publicationDate),
   });
 
 
@@ -185,7 +182,7 @@ const parseArticlePage = async (page, url) => {
   } catch(err) {
     // Skip if duplicate
     if (err.code === 11000) {
-      console.error("Duplicate entry, skipping...")
+      logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
     } else {
       throw err;
     }

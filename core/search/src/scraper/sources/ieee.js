@@ -1,5 +1,6 @@
 const cheerio = require("cheerio");
 
+const { logger, dateRe, createDate } = require("../utils.js");
 const axios = require("../axiosWrapper.js")(true);
 const Article = require("../../models/article");
 
@@ -34,7 +35,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
     page++;
   } while (searchResults && searchResults.hasNext);
 
-  console.log(`Queried ${page} pages, got ${articles.length} articles`);
+  logger.info(`${SOURCE}: Queried ${page} pages, got ${articles.length} articles`);
 
   return articles;
 };
@@ -63,7 +64,7 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
   };
 
   try {
-    console.log(`POST - ${endpoint} | page: ${page}`);
+    logger.debug(`POST - ${endpoint} | page: ${page}`);
     // Makes a request to the public IEEE API (not the one where you need an API key for)
     // These headers are required, otherwise they are mad
     const response = await axios.post(endpoint, JSON.stringify(data), {
@@ -85,9 +86,8 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
 
     return result;
   } catch (err) {
-    console.error(err.message);
-    console.error("Exiting...");
-    process.exit(1);
+    logger.error(`${SOURCE}: query error: ${error.message}`)
+    return null;
   }
 };
 
@@ -107,7 +107,7 @@ const parseArticle = async (articleRecord) => {
     venue: null,
     authors: authors.map(a => a.normalizedName),
     abstract,
-    publicationDate: new Date(publicationDate),
+    publicationDate: createDate(publicationDate),
     citationCount,
   });
 
@@ -117,7 +117,7 @@ const parseArticle = async (articleRecord) => {
   } catch(err) {
     // Skip if duplicate
     if (err.code === 11000) {
-      console.error("Duplicate entry, skipping...")
+      logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
     } else {
       throw err;
     }

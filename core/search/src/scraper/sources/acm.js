@@ -1,5 +1,6 @@
 const cheerio = require("cheerio");
 
+const { logger, dateRe, createDate } = require("../utils.js");
 const axios = require("../axiosWrapper.js")(true);
 const Article = require("../../models/article");
 
@@ -12,7 +13,6 @@ const HOST = "https://dl.acm.org";
 // SOURCE SETTINGS
 const PAGE_SIZE = config.pageSize;
 const TIMEOUT = config.timeout;
-
 
 /**
  * Queries the digital libary
@@ -47,8 +47,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
     page++;
   } while (searchResults && searchResults.hasNext)
 
-  console.log(`Queried ${page} pages, got ${articles.length} articles`);
-
+  logger.info(`${SOURCE}: Queried ${page} pages, got ${articles.length} articles`);
   return articles;
 }
 
@@ -66,15 +65,14 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
   // Build the request
   const url = `${endpoint}/?AllField=${encodeURIComponent(searchQuery)}&startPage=${page}&pageSize=${pageSize}`
 
-  console.log(`GET - ${url}`);
+  logger.debug(`GET - ${url}`);
   try {
     const response = await axios.get(url);
     const result = parseResultPage(response.data);
     return result;
   } catch(err) {
-    console.error(err.message);
-    console.error("Exiting...");
-    process.exit(1);
+    logger.error(`${SOURCE} query error: ${error.message}`)
+    return null;
   }
 }
 
@@ -114,15 +112,14 @@ const parseResultPage = (pageHTML) => {
  * @returns Article
  */
 const getArticle = async (url) => {
-  console.log(`GET - ${url}`);
+  logger.debug(`GET - ${url}`);
   try {
     const response = await axios.get(url);
     const result = parseArticlePage(response.data, url);
     return result;
   } catch(err) {
-    console.error(err.message);
-    console.error("exiting...")
-    process.exit(1);
+    logger.error(`${SOURCE} query error: ${error.message}`)
+    return null;
   }
 }
 
@@ -155,7 +152,7 @@ const parseArticlePage = async (pageHTML, url) => {
     venue,
     authors,
     abstract,
-    publicationDate,
+    publicationDate: createDate(publicationDate),
   });
 
   try {
@@ -164,7 +161,7 @@ const parseArticlePage = async (pageHTML, url) => {
   } catch(err) {
     // Skip if duplicate
     if (err.code === 11000) {
-      console.error("Duplicate entry, skipping...")
+      logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
     } else {
       throw err;
     }

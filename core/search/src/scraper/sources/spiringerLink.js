@@ -1,6 +1,7 @@
 
 const cheerio = require("cheerio");
 
+const { logger, dateRe, createDate } = require("../utils.js");
 const axios = require("../axiosWrapper.js")(true);
 const Article = require("../../models/article");
 
@@ -48,7 +49,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
     page++;
   } while (searchResults && searchResults.hasNext)
 
-  console.log(`Queried ${page} pages, got ${articles.length} articles`);
+  logger.info(`${SOURCE}: Queried ${page} pages, got ${articles.length} articles`);
 
   return articles;
 }
@@ -68,7 +69,7 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
   // https://link.springer.com/search/page/1?query=Kubernetes
   const url = `${endpoint}/page/${page}?query=${encodeURIComponent(searchQuery)}&facet-content-type="ConferencePaper"`
 
-  console.log(`GET - ${url}`);
+  logger.debug(`GET - ${url}`);
   try {
     const response = await axios.get(url, {
       maxRedirects: 20
@@ -76,9 +77,8 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
     const result = parseResultPage(response.data);
     return result;
   } catch(err) {
-    console.error(err.message);
-    console.error("Exiting...");
-    process.exit(1);
+    logger.error(`${SOURCE} query error: ${error.message}`)
+    return null;
   }
 }
 
@@ -118,15 +118,14 @@ const parseResultPage = (pageHTML) => {
  * @returns Article
  */
 const getArticle = async (url) => {
-  console.log(`GET - ${url}`);
+  logger.info(`GET - ${url}`);
   try {
     const response = await axios.get(url);
     const result = parseArticlePage(response.data, url);
     return result;
   } catch(err) {
-    console.error(err.message);
-    console.error("exiting...")
-    process.exit(1);
+    logger.error(`${SOURCE}: query error: ${error.message}`)
+    return null;
   }
 }
 
@@ -161,7 +160,7 @@ const parseArticlePage = async (pageHTML, url) => {
     venue,
     authors,
     abstract,
-    publicationDate,
+    publicationDate: createDate(publicationDate),
   });
 
   try {
@@ -170,7 +169,7 @@ const parseArticlePage = async (pageHTML, url) => {
   } catch(err) {
     // Skip if duplicate
     if (err.code === 11000) {
-      console.error("Duplicate entry, skipping...")
+      logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
     } else {
       throw err;
     }
