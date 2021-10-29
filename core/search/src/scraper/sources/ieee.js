@@ -29,6 +29,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
     // Gets all articles from a single search result page
     // also checks if there is another result page after it
     searchResults = await getSearchResults(searchQuery, page, pageSize);
+    articles.push(...searchResults.articles);
     page++;
   } while (searchResults && searchResults.hasNext);
 
@@ -72,9 +73,10 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
       }
     });
 
+
     const { records, totalRecords, endRecord } = response.data
 
-    const articles = records.map((record) => parseArticle(record));
+    const articles = await Promise.all(records.map((record) => parseArticle(record)));
 
     const result = {
       articles,

@@ -2,7 +2,6 @@ const query = require("./sources");
 const { logger } = require("./utils.js");
 
 const SOURCES = ["ACM", "arxiv", "IEEE", "ScienceDirect", "SpringerLink"];
-// const SOURCES = ["ScienceDirect"];
 
 const getPapersBySearchQuery = async (searchQuery, sources = SOURCES) => {
   const promises = [];
