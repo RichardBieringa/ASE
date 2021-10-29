@@ -27,7 +27,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
   let searchResults = null;
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: false,
     args: ["--disable-setuid-sandbox"],
     ignoreHTTPSErrors: true,
   });
@@ -45,6 +45,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
     // Not parallel to prevent IP blocks
     for (let url of articleUrls) {
       const article = await parseArticlePage(page, url);
+      articles.push(article);
 
       // synchronous sleep
       await new Promise((resolve) => setTimeout(resolve, TIMEOUT));
@@ -53,7 +54,7 @@ const query = async (searchQuery, startPage = 0, pageSize = PAGE_SIZE) => {
     pageIndex++;
   } while (searchResults && searchResults.hasNext);
 
-  logger.info(`${SOURCE}: Queried ${page} pages, got ${articles.length} articles`);
+  logger.info(`${SOURCE}: Queried ${pageIndex} pages, got ${articles.length} articles`);
 
   browser.close();
   return articles;
@@ -71,7 +72,7 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
   const offset = pageIndex * pageSize;
 
   const url = `${HOST}/search?qs=${searchQuery}&offset=${offset}&sortBy=date`
-  logger.debug(`PUPETTEER - ${url}`);
+  logger.info(`PUPETTEER - ${url}`);
 
   try {
     // window.load
@@ -98,7 +99,7 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
 
     return result;
   } catch (err) {
-    logger.error(`${SOURCE}: query error: ${error.message}`)
+    logger.error(`${SOURCE}: query error: ${err.message}`)
     return null;
   }
 };
@@ -109,7 +110,7 @@ const getSearchResults = async (page, searchQuery, pageIndex, pageSize) => {
  * @returns Article
  */
 const parseArticlePage = async (page, url) => {
-  logger.debug(`PUPPETEER - ${url}`);
+  logger.info(`PUPPETEER - ${url}`);
 
   // Window.load 
   await page.goto(url, {
@@ -179,6 +180,7 @@ const parseArticlePage = async (page, url) => {
 
     // Save it to DB
     await article.save();
+    logger.info(`New Article (${doi}) stored in the database!`);
     return article;
 
   } catch(err) {

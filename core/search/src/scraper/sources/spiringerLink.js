@@ -77,7 +77,7 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
     const result = parseResultPage(response.data);
     return result;
   } catch(err) {
-    logger.error(`${SOURCE} query error: ${error.message}`)
+    logger.error(`${SOURCE} query error: ${err.message}`)
     return null;
   }
 }
@@ -124,7 +124,7 @@ const getArticle = async (url) => {
     const result = parseArticlePage(response.data, url);
     return result;
   } catch(err) {
-    logger.error(`${SOURCE}: query error: ${error.message}`)
+    logger.error(`${SOURCE}: query error: ${err.message}`)
     return null;
   }
 }
@@ -167,6 +167,7 @@ const parseArticlePage = async (pageHTML, url) => {
 
     // Save it to DB
     await article.save();
+    logger.info(`New Article (${doi}) stored in the database!`);
     return article;
 
   } catch(err) {

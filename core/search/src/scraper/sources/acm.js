@@ -65,13 +65,13 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
   // Build the request
   const url = `${endpoint}/?AllField=${encodeURIComponent(searchQuery)}&startPage=${page}&pageSize=${pageSize}`
 
-  logger.debug(`GET - ${url}`);
+  logger.info(`GET - ${url}`);
   try {
     const response = await axios.get(url);
     const result = parseResultPage(response.data);
     return result;
   } catch(err) {
-    logger.error(`${SOURCE} query error: ${error.message}`)
+    logger.error(`${SOURCE} query error: ${err.message}`)
     return null;
   }
 }
@@ -112,13 +112,13 @@ const parseResultPage = (pageHTML) => {
  * @returns Article
  */
 const getArticle = async (url) => {
-  logger.debug(`GET - ${url}`);
+  logger.info(`GET - ${url}`);
   try {
     const response = await axios.get(url);
     const result = parseArticlePage(response.data, url);
     return result;
   } catch(err) {
-    logger.error(`${SOURCE} query error: ${error.message}`)
+    logger.error(`${SOURCE} query error: ${err.message}`)
     return null;
   }
 }
@@ -160,6 +160,7 @@ const parseArticlePage = async (pageHTML, url) => {
 
     // Save it to DB
     await article.save();
+    logger.info(`New Article (${doi}) stored in the database!`);
     return article;
 
   } catch(err) {

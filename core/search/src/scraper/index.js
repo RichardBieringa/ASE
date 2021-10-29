@@ -1,24 +1,22 @@
 const query = require("./sources");
+const { logger } = require("./utils.js");
 
-const getPapersBySearchQuery = async (searchQuery) => {
-  console.log(`getPapersBySearchQuery`);
+const SOURCES = ["ACM", "arxiv", "IEEE", "ScienceDirect", "SpringerLink"];
+// const SOURCES = ["ScienceDirect"];
 
+const getPapersBySearchQuery = async (searchQuery, sources = SOURCES) => {
   const promises = [];
-  promises.push(query("ACM", searchQuery));
-  promises.push(query("arxiv", searchQuery));
-  promises.push(query("IEEE", searchQuery));
-  promises.push(query("ScienceDirect", searchQuery));
-  promises.push(query("SpringerLink", searchQuery));
-  const articles = await Promise.all(promises)
+  for (let source of sources) {
+    promises.push(query(source, searchQuery));
+  }
 
-
-
-  console.log(`Articles:`);
-  console.log(`ACM: ${articles[0].length}`);
-  console.log(`arXiv.org: ${articles[1].length}`);
-  console.log(`IEEE Xplore: ${articles[2].length}`);
-  console.log(`Science Direct: ${articles[3].length}`);
-  console.log(`Springer Link: ${articles[4].length}`);
+  const articles = await Promise.all(promises);
+  logger.info(`RESULTS:`)
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i];
+    const articlesForSource = articles[i];
+    logger.info(`${source}: ${articlesForSource.length} articles`);
+  }
 
   return articles;
 };

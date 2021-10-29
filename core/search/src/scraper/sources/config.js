@@ -1,7 +1,7 @@
 module.exports = {
   acm: {
     pageSize: 25,
-    timeout: 500,
+    timeout: 200,
   },
   arxiv: {
     pageSize: 25,

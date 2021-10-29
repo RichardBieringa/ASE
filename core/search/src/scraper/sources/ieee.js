@@ -62,7 +62,7 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
   };
 
   try {
-    logger.debug(`POST - ${endpoint} | page: ${page}`);
+    logger.info(`POST - ${endpoint} | page: ${page}`);
     // Makes a request to the public IEEE API (not the one where you need an API key for)
     // These headers are required, otherwise they are mad
     const response = await axios.post(endpoint, JSON.stringify(data), {
@@ -84,7 +84,7 @@ const getSearchResults = async (searchQuery, page, pageSize) => {
 
     return result;
   } catch (err) {
-    logger.error(`${SOURCE}: query error: ${error.message}`)
+    logger.error(`${SOURCE}: query error: ${err.message}`)
     return null;
   }
 };
@@ -119,6 +119,7 @@ const parseArticle = async (articleRecord) => {
 
     // Save it to DB
     await article.save();
+    logger.info(`New Article (${doi}) stored in the database!`);
     return article;
 
   } catch(err) {
