@@ -1,9 +1,7 @@
 const cheerio = require("cheerio");
 
-const { logger, dateRe, createDate } = require("../utils.js");
+const { logger, dateRe, createArticle } = require("../utils.js");
 const axios = require("../axiosWrapper.js")(true);
-const Article = require("../../models/article");
-
 const config = require("./config.js")["acm"];
 
 // SOURCE INFO
@@ -143,36 +141,20 @@ const parseArticlePage = async (pageHTML, url) => {
   const abstract = $(".article__body .article__abstract .abstractInFull p").text();
   const publicationDate = new Date($(".citation .CitationCoverDate").text());
 
+  // Create Article entry
+  const article = await createArticle({
+    source: SOURCE,
+    doi,
+    url,
+    title,
+    type,
+    venue,
+    authors,
+    abstract,
+    publicationDate,
+  });
 
-  try {
-    // Create Article entry
-    const article = new Article({
-      source: SOURCE,
-      doi,
-      url,
-      title,
-      type,
-      venue,
-      authors,
-      abstract,
-      publicationDate: createDate(publicationDate),
-    });
-
-    // Save it to DB
-    await article.save();
-    logger.info(`New Article (${doi}) stored in the database!`);
-    return article;
-
-  } catch(err) {
-    // Skip if duplicate
-    if (err.code === 11000) {
-      logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
-    } else {
-      logger.error(`${SOURCE}: Article parsing error: ${err.message}`);
-    }
-
-    return null;
-  }
+  return article;
 }
 
 module.exports = query;

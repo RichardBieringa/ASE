@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 
-const { logger, dateRe, createDate } = require("../utils.js");
+const { logger, dateRe, createArticle } = require("../utils.js");
 const Article = require("../../models/article");
 
 const config = require("./config.js")["scienceDirect"];
@@ -117,56 +117,58 @@ const parseArticlePage = async (page, url) => {
     waitUntil: "networkidle2",
   });
 
-  const result = await page.evaluate(() => {
-    const articleData = {
-      doi: null,
-      url: null,
-      title: null,
-      type: null,
-      venue: null,
-      authors: [],
-      abstract: null,
-      publicationDate: null,
-    }
-
-    // Web scraping the DOM contents
-    const doi = document.querySelector(".ArticleIdentifierLinks .doi");
-    if (doi) articleData.doi = doi.innerText.trim();
-
-    const title = document.querySelector(".title-text");
-    if (title) articleData.title = title.innerText.trim();
-
-    const venue = document.querySelector(".article-dochead > span, .publication-title-link");
-    if (venue) articleData.venue = venue.innerText.trim();
-
-    const authors = document.querySelectorAll(".author-group .author .content");
-    for (let author of authors) {
-      const firstName = author.querySelector(".given-name").innerText.trim();
-      const lastName = author.querySelector(".surname").innerText.trim();
-      articleData.authors.push(`${firstName} ${lastName}`);
-    }
-
-    const abstract = document.querySelector(".abstract.author p");
-    if (abstract) articleData.abstract = abstract.innerText.trim();
-
-    // Extracts the submission date
-    const dateRe = /.*(\d{0,2}\s\w+\s\d{4}).*/;
-    const dateEl = document.querySelector("#banner .wrapper p, .Publication .publication-volume .text-xs");
-    if (dateEl && dateRe.test(dateEl.textContent)) {
-      const text = dateEl.innerText.trim();
-      const matches = text.match(dateRe);
-      const dateString = matches.pop().trim();
-      articleData.publicationDate = dateString;
-    }
-
-    return articleData;
-  });
-
-  const { doi, title, type, venue, authors, abstract, publicationDate } = result;
-
   try {
-    // Create Article entry
-    const article = new Article({
+    const result = await page.evaluate(() => {
+      const articleData = {
+        doi: null,
+        url: null,
+        title: null,
+        type: null,
+        venue: null,
+        authors: [],
+        abstract: null,
+        publicationDate: null,
+      }
+
+      // Web scraping the DOM contents
+      const doi = document.querySelector(".ArticleIdentifierLinks .doi");
+      if (doi && doi.innerText) articleData.doi = doi.innerText.trim();
+
+      const title = document.querySelector(".title-text");
+      if (title && title.innerText) articleData.title = title.innerText.trim();
+
+      const venue = document.querySelector(".article-dochead > span, .publication-title-link");
+      if (venue && venue.innerText) articleData.venue = venue.innerText.trim();
+
+      const authors = document.querySelectorAll(".author-group .author .content");
+      for (let author of authors) {
+        if (!author.innerText) continue;
+
+        const firstName = author.querySelector(".given-name").innerText.trim();
+        const lastName = author.querySelector(".surname").innerText.trim();
+        articleData.authors.push(`${firstName} ${lastName}`);
+      }
+
+      const abstract = document.querySelector(".abstract.author p");
+      if (abstract) articleData.abstract = abstract.innerText.trim();
+
+      // Extracts the submission date
+      const dateRe = /.*(\d{0,2}\s\w+\s\d{4}).*/;
+      const dateEl = document.querySelector("#banner .wrapper p, .Publication .publication-volume .text-xs");
+      if (dateEl && dateEl.innerText && dateRe.test(dateEl.innerText)) {
+        const text = dateEl.innerText.trim();
+        const matches = text.match(dateRe);
+        const dateString = matches.pop().trim();
+        articleData.publicationDate = dateString;
+      }
+
+      return articleData;
+    });
+
+    const { doi, title, type, venue, authors, abstract, publicationDate } = result;
+
+    // Create Article entry in DB
+    const article = await createArticle({
       source: SOURCE,
       doi,
       url,
@@ -175,22 +177,12 @@ const parseArticlePage = async (page, url) => {
       venue,
       authors,
       abstract,
-      publicationDate: createDate(publicationDate),
+      publicationDate,
     });
 
-    // Save it to DB
-    await article.save();
-    logger.info(`New Article (${doi}) stored in the database!`);
     return article;
-
   } catch(err) {
-    // Skip if duplicate
-    if (err.code === 11000) {
-      logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
-    } else {
-      logger.error(`${SOURCE}: Article parsing error: ${err.message}`);
-    }
-
+    logger.error(`${SOURCE} ERROR - ${err.message}`);
     return null;
   }
 };

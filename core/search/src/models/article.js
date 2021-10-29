@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 const Article = Schema({
   source: { type: String, required: true },
   added: { type: Date, default: Date.now },
-  doi: { type: String },
+  doi: { type: String, required: true },
   title: { type: String, required: true },
   url: { type: String, required: true },
   type: { type: String },

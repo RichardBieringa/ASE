@@ -1,7 +1,7 @@
 
 const cheerio = require("cheerio");
 
-const { logger, dateRe, createDate } = require("../utils.js");
+const { logger, dateRe, createArticle } = require("../utils.js");
 const axios = require("../axiosWrapper.js")(true);
 const Article = require("../../models/article");
 
@@ -139,6 +139,20 @@ const parseArticlePage = async (pageHTML, url) => {
   // Parse the Page HTML
   const $ = cheerio.load(pageHTML);
 
+  const articleObject = {
+    source: null,
+    added: null,
+    doi: null,
+    title: null,
+    url: null,
+    type: null,
+    venue: null,
+    authors: [],
+    abstract: null,
+    publicationDate: null,
+    citationCount: null,
+  };
+
   // Web scraping the DOM contents
   const doi = $("meta[name='citation_doi']").attr("content");
   const title = $(".MainTitleSection > h1").text();
@@ -151,35 +165,20 @@ const parseArticlePage = async (pageHTML, url) => {
   const dateString = $(".article-dates__first-online > time").attr("datetime");
   const publicationDate = new Date(dateString);
 
-  try {
-    // Create Article entry
-    const article = new Article({
-      source: SOURCE,
-      doi,
-      url,
-      title,
-      type,
-      venue,
-      authors,
-      abstract,
-      publicationDate: createDate(publicationDate),
-    });
+  // Create Article entry in DB
+  const article = await createArticle({
+    source: SOURCE,
+    doi,
+    url,
+    title,
+    type,
+    venue,
+    authors,
+    abstract,
+    publicationDate,
+  })
 
-    // Save it to DB
-    await article.save();
-    logger.info(`New Article (${doi}) stored in the database!`);
-    return article;
-
-  } catch(err) {
-    // Skip if duplicate
-    if (err.code === 11000) {
-      logger.warn(`${SOURCE}: Article with ${doi} already exists, skipping`);
-    } else {
-      logger.error(`${SOURCE}: Article parsing error: ${err.message}`);
-    }
-
-    return null;
-  }
+  return article;
 }
 
 module.exports = query;
